@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Budget Tracker</h1>
+        <p>Balance: <span id="balance">$0</span></p>
+    </header>
+
+    <main>
+        <section id="form-section"><h2>Add Transaction</h2>
+            <input type="text" id="description" placeholder="description (e.g. Food)">
+            <input type="number" id="amount" placeholder="amount (e.g. 50)">
+            <select id="type">
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+            </select>
+            <button id="add-btn">Add</button>
+        </section>
+
+        <section id="list-section">
+            <h2>Transaction</h2>
+            <ul id="transaction-list">
+
+            </ul>
+        </section>
+    </main>
+
+    <div id="chart-section">
+        <h2>Spending overview</h2>
+        <canvas id="myChart"></canvas>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
