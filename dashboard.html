@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Budget Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            color: #e6eef6;
+            overflow-x: hidden;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 32px 24px;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            margin-bottom: 40px;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #5ee0ff, #8b5cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: #9aa4ad;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .sidebar-menu a:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #e6eef6;
+        }
+
+        .sidebar-menu a.active {
+            background: rgba(94, 224, 255, 0.1);
+            color: #5ee0ff;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 32px;
+            left: 24px;
+            right: 24px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .user-email {
+            font-size: 0.85rem;
+            color: #9aa4ad;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #e6eef6;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            margin-left: 250px;
+            padding: 40px;
+            min-height: 100vh;
+        }
+
+        .dashboard-header {
+            margin-bottom: 40px;
+        }
+
+        .dashboard-header h2 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .dashboard-header p {
+            color: #9aa4ad;
+        }
+
+        .create-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #5ee0ff, #8b5cff);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 32px;
+        }
+
+        .create-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(94, 224, 255, 0.3);
+        }
+
+        /* BUDGET CARDS GRID */
+        .budgets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .budget-card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .budget-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+            border-color: rgba(94, 224, 255, 0.3);
+        }
+
+        .budget-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 16px;
+        }
+
+        .budget-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 4px;
+        }
+
+        .budget-card-date {
+            font-size: 0.8rem;
+            color: #9aa4ad;
+        }
+
+        .budget-menu-btn {
+            background: none;
+            border: none;
+            color: #9aa4ad;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .budget-menu-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #e6eef6;
+        }
+
+        /* DROPDOWN MENU */
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #1a1a1a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 8px;
+            z-index: 200;
+            min-width: 140px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 10px 14px;
+            background: none;
+            border: none;
+            color: #e6eef6;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: 7px;
+            text-align: left;
+            transition: background 0.15s;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .dropdown-item.danger:hover {
+            background: rgba(255, 80, 80, 0.15);
+            color: #ff6b6b;
+        }
+
+        .budget-preview {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(135deg, rgba(94, 224, 255, 0.1), rgba(139, 92, 255, 0.1));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9aa4ad;
+            font-size: 0.9rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #9aa4ad;
+            grid-column: 1 / -1;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: #e6eef6;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #0f0f0f;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 420px;
+            width: 90%;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 24px;
+            font-size: 1.5rem;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            color: #e6eef6;
+            font-size: 1rem;
+            margin-bottom: 24px;
+        }
+
+        .modal-content input:focus {
+            outline: none;
+            border-color: #5ee0ff;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel {
+            background: rgba(255, 255, 255, 0.05);
+            color: #e6eef6;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-confirm {
+            background: linear-gradient(135deg, #5ee0ff, #8b5cff);
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: rgba(255, 80, 80, 0.2);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 80, 80, 0.3) !important;
+        }
+
+        .btn-danger:hover {
+            background: rgba(255, 80, 80, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                overflow: hidden;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>💰 Budget Tracker</h1>
+        </div>
+
+        <ul class="sidebar-menu">
+            <li><a href="#" class="active">🏠 Home</a></li>
+            <li><a href="#">👤 Account</a></li>
+            <li><a href="#">ℹ️ About</a></li>
+            <li><a href="#">❓ How to Use</a></li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar" id="user-avatar">U</div>
+                <div class="user-email" id="user-email">Loading...</div>
+            </div>
+            <button class="logout-btn" id="logout-btn">Logout</button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <div class="dashboard-header">
+            <h2>My Budget Projects</h2>
+            <p>Manage your finances across multiple budgets</p>
+        </div>
+
+        <button class="create-btn" id="create-btn">+ New Budget Project</button>
+
+        <div class="budgets-grid" id="budgets-grid">
+            <!-- Budget cards will be inserted here -->
+        </div>
+    </main>
+
+    <!-- CREATE MODAL -->
+    <div class="modal" id="create-modal">
+        <div class="modal-content">
+            <h3>Create New Budget</h3>
+            <input type="text" id="budget-title-input" placeholder="Budget title (e.g., Personal 2026)" maxlength="50">
+            <div class="modal-actions">
+                <button class="btn-cancel" id="cancel-create-btn">Cancel</button>
+                <button class="btn-confirm" id="confirm-create-btn">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RENAME MODAL -->
+    <div class="modal" id="rename-modal">
+        <div class="modal-content">
+            <h3>Rename Budget</h3>
+            <input type="text" id="rename-title-input" placeholder="New title" maxlength="50">
+            <div class="modal-actions">
+                <button class="btn-cancel" id="cancel-rename-btn">Cancel</button>
+                <button class="btn-confirm" id="confirm-rename-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DELETE MODAL -->
+    <div class="modal" id="delete-modal">
+        <div class="modal-content">
+            <h3>Delete Budget?</h3>
+            <p style="color:#9aa4ad; margin-bottom: 24px;">This will permanently delete the budget and all its transactions. This cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="cancel-delete-btn">Cancel</button>
+                <button class="btn-danger" id="confirm-delete-btn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://budget-tracker-backend-production-16e4.up.railway.app';
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        const userEmail = localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail');
+
+        // Check if logged in
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        // Set user info
+        document.getElementById('user-email').textContent = userEmail || 'User';
+        document.getElementById('user-avatar').textContent = (userEmail || 'U')[0].toUpperCase();
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('currentProjectId');
+            sessionStorage.removeItem('authToken');
+            sessionStorage.removeItem('userEmail');
+            window.location.href = 'login.html';
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.dropdown-menu.show').forEach(d => d.classList.remove('show'));
+        });
+
+        // ── LOAD PROJECTS ──────────────────────────────────────────────
+        async function loadProjects() {
+            try {
+                const response = await fetch(`${API_URL}/api/projects`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const projects = await response.json();
+                renderProjects(projects);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function renderProjects(projects) {
+            const grid = document.getElementById('budgets-grid');
+
+            if (projects.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No budget projects yet</h3>
+                        <p>Click "+ New Budget Project" to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = projects.map(project => `
+                <div class="budget-card" data-id="${project._id}" onclick="openBudget('${project._id}')">
+                    <div class="budget-card-header">
+                        <div>
+                            <h3>${escapeHtml(project.title)}</h3>
+                            <div class="budget-card-date">Last modified: ${new Date(project.updatedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                        </div>
+                        <div style="position:relative;">
+                            <button class="budget-menu-btn" onclick="event.stopPropagation(); toggleMenu('menu-${project._id}')">⋮</button>
+                            <div class="dropdown-menu" id="menu-${project._id}">
+                                <button class="dropdown-item" onclick="event.stopPropagation(); openRename('${project._id}', '${escapeHtml(project.title)}')">✏️ Rename</button>
+                                <button class="dropdown-item danger" onclick="event.stopPropagation(); openDelete('${project._id}')">🗑️ Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="budget-preview">📊 Budget Overview</div>
+                </div>
+            `).join('');
+        }
+
+        function toggleMenu(menuId) {
+            // Close all other menus first
+            document.querySelectorAll('.dropdown-menu.show').forEach(d => {
+                if (d.id !== menuId) d.classList.remove('show');
+            });
+            document.getElementById(menuId).classList.toggle('show');
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
+        function openBudget(projectId) {
+            localStorage.setItem('currentProjectId', projectId);
+            window.location.href = 'index.html';
+        }
+
+        // ── CREATE ─────────────────────────────────────────────────────
+        const createModal = document.getElementById('create-modal');
+        const titleInput = document.getElementById('budget-title-input');
+
+        document.getElementById('create-btn').addEventListener('click', () => {
+            titleInput.value = '';
+            createModal.classList.add('show');
+            titleInput.focus();
+        });
+
+        document.getElementById('cancel-create-btn').addEventListener('click', () => {
+            createModal.classList.remove('show');
+        });
+
+        document.getElementById('confirm-create-btn').addEventListener('click', async () => {
+            const title = titleInput.value.trim();
+            if (!title) { alert('Please enter a budget title'); return; }
+
+            try {
+                const response = await fetch(`${API_URL}/api/projects`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title })
+                });
+
+                if (response.ok) {
+                    createModal.classList.remove('show');
+                    loadProjects();
+                } else {
+                    alert('Failed to create project');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Could not connect to server');
+            }
+        });
+
+        // ── RENAME ─────────────────────────────────────────────────────
+        const renameModal = document.getElementById('rename-modal');
+        const renameTitleInput = document.getElementById('rename-title-input');
+        let activeRenameId = null;
+
+        function openRename(projectId, currentTitle) {
+            activeRenameId = projectId;
+            renameTitleInput.value = currentTitle;
+            renameModal.classList.add('show');
+            renameTitleInput.focus();
+        }
+
+        document.getElementById('cancel-rename-btn').addEventListener('click', () => {
+            renameModal.classList.remove('show');
+        });
+
+        document.getElementById('confirm-rename-btn').addEventListener('click', async () => {
+            const title = renameTitleInput.value.trim();
+            if (!title) { alert('Please enter a title'); return; }
+
+            try {
+                const response = await fetch(`${API_URL}/api/projects/${activeRenameId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title })
+                });
+
+                if (response.ok) {
+                    renameModal.classList.remove('show');
+                    loadProjects();
+                } else {
+                    alert('Failed to rename project');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Could not connect to server');
+            }
+        });
+
+        // ── DELETE ─────────────────────────────────────────────────────
+        const deleteModal = document.getElementById('delete-modal');
+        let activeDeleteId = null;
+
+        function openDelete(projectId) {
+            activeDeleteId = projectId;
+            deleteModal.classList.add('show');
+        }
+
+        document.getElementById('cancel-delete-btn').addEventListener('click', () => {
+            deleteModal.classList.remove('show');
+        });
+
+        document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+            try {
+                const response = await fetch(`${API_URL}/api/projects/${activeDeleteId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    deleteModal.classList.remove('show');
+                    loadProjects();
+                } else {
+                    alert('Failed to delete project');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Could not connect to server');
+            }
+        });
+
+        // Init
+        loadProjects();
+    </script>
+
+</body>
+</html>

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,17 +6,67 @@
     <title>Budget Tracker</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Top nav bar for back button + project title */
+        .top-nav {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .back-btn:hover {
+            opacity: 0.85;
+        }
+
+        .project-title-label {
+            font-size: 1.1rem;
+            color: #555;
+            font-weight: 500;
+        }
+
+        #project-title {
+            font-weight: 700;
+            color: #667eea;
+        }
+    </style>
 </head>
 <body>
+
+    <!-- Back to Dashboard -->
+    <div style="max-width: 1200px; margin: 0 auto; padding: 20px 20px 0;">
+        <div class="top-nav">
+            <a class="back-btn" href="dashboard.html">← Dashboard</a>
+            <span class="project-title-label">Project: <span id="project-title">Loading...</span></span>
+        </div>
+    </div>
+
     <header>
         <h1>Budget Tracker</h1>
         <p>Balance: <span id="balance">Rp0</span></p>
     </header>
 
     <main>
-        <section id="form-section"><h2>Add Transaction</h2>
+        <section id="form-section">
+            <h2>Add Transaction</h2>
             <input type="text" id="description" placeholder="description (e.g. Food)">
-            <input type="number" id="amount" placeholder="amount (e.g. 50)">
+            <input type="number" id="amount" placeholder="amount (e.g. 50000)">
             <select id="type">
                 <option value="income">Income</option>
                 <option value="expense">Expense</option>
@@ -27,9 +76,7 @@
 
         <section id="list-section">
             <h2>Transaction</h2>
-            <ul id="transaction-list">
-
-            </ul>
+            <ul id="transaction-list"></ul>
         </section>
     </main>
 
@@ -39,5 +86,27 @@
     </div>
 
     <script src="script.js"></script>
+    <script>
+        // Set project title in the top nav after loading
+        // The script.js loads transactions; we fetch project info separately here
+        const _token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        const _projectId = localStorage.getItem('currentProjectId');
+        const API = 'https://budget-tracker-backend-production-16e4.up.railway.app';
+
+        if (_token && _projectId) {
+            fetch(`${API}/api/projects`, {
+                headers: { 'Authorization': `Bearer ${_token}` }
+            })
+            .then(r => r.json())
+            .then(projects => {
+                const current = projects.find(p => p._id === _projectId);
+                if (current) {
+                    document.getElementById('project-title').textContent = current.title;
+                    document.title = `${current.title} - Budget Tracker`;
+                }
+            })
+            .catch(() => {});
+        }
+    </script>
 </body>
 </html>
