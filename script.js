@@ -177,13 +177,19 @@ async function callAI(messages) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`  // your app's auth token, not GitHub token
+            'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ messages })
     });
 
-    if (!res.ok) throw new Error('AI API error: ' + res.status);
     const data = await res.json();
+    
+    // Debug: see what Railway is actually returning
+    console.log('AI response:', data);
+
+    if (!res.ok) throw new Error('AI API error: ' + JSON.stringify(data));
+    if (!data.choices || !data.choices[0]) throw new Error('Unexpected AI response: ' + JSON.stringify(data));
+    
     return data.choices[0].message.content;
 }
 
