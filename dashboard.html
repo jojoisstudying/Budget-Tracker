@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Budget Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -14,20 +15,16 @@
             overflow-x: hidden;
         }
 
-        /* ─── SIDEBAR (desktop only) ─────────────────── */
+        /* ─── SIDEBAR ────────────────────────────────── */
         .sidebar {
-            position: fixed;
-            left: 0; top: 0;
-            width: 250px;
-            height: 100vh;
+            position: fixed; left: 0; top: 0;
+            width: 250px; height: 100vh;
             background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
             border-right: 1px solid rgba(255,255,255,0.08);
-            padding: 32px 24px;
-            z-index: 100;
+            padding: 32px 24px; z-index: 100;
         }
 
         .sidebar-header { margin-bottom: 40px; }
-
         .sidebar-header h1 {
             font-size: 1.5rem;
             background: linear-gradient(135deg, #5ee0ff, #8b5cff);
@@ -75,12 +72,10 @@
         }
         .logout-btn:hover { background: rgba(255,255,255,0.08); }
 
-        /* ─── MOBILE TOP HEADER ──────────────────────── */
+        /* ─── MOBILE HEADER ──────────────────────────── */
         .mobile-header {
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 20px;
+            display: none; align-items: center;
+            justify-content: space-between; padding: 16px 20px;
             border-bottom: 1px solid rgba(255,255,255,0.06);
             background: rgba(255,255,255,0.02);
             position: sticky; top: 0; z-index: 99;
@@ -102,11 +97,7 @@
         }
 
         /* ─── MAIN CONTENT ───────────────────────────── */
-        .main-content {
-            margin-left: 250px;
-            padding: 40px;
-            min-height: 100vh;
-        }
+        .main-content { margin-left: 250px; padding: 40px; min-height: 100vh; }
 
         .dashboard-header { margin-bottom: 40px; }
         .dashboard-header h2 { font-size: 2rem; margin-bottom: 8px; }
@@ -132,9 +123,10 @@
         .budget-card {
             background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
             border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 16px; padding: 24px;
+            border-radius: 16px; padding: 20px;
             cursor: pointer; transition: all 0.3s; position: relative;
         }
+
         .budget-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 20px 40px rgba(0,0,0,0.7);
@@ -143,11 +135,13 @@
 
         .budget-card-header {
             display: flex; justify-content: space-between;
-            align-items: start; margin-bottom: 16px;
+            align-items: start; margin-bottom: 14px;
         }
 
-        .budget-card h3 { font-size: 1.2rem; margin-bottom: 4px; word-break: break-word; }
-        .budget-card-date { font-size: 0.8rem; color: #9aa4ad; }
+        .budget-card h3 { font-size: 1.1rem; margin-bottom: 4px; word-break: break-word; }
+        .budget-card-date { font-size: 0.78rem; color: #9aa4ad; }
+
+        .dropdown-wrap { position: relative; }
 
         .budget-menu-btn {
             background: none; border: none; color: #9aa4ad;
@@ -155,8 +149,6 @@
             border-radius: 6px; transition: all 0.2s; line-height: 1;
         }
         .budget-menu-btn:hover { background: rgba(255,255,255,0.08); color: #e6eef6; }
-
-        .dropdown-wrap { position: relative; }
 
         .dropdown-menu {
             display: none; position: absolute; top: 100%; right: 0;
@@ -175,12 +167,67 @@
         .dropdown-item:hover { background: rgba(255,255,255,0.08); }
         .dropdown-item.danger:hover { background: rgba(255,80,80,0.15); color: #ff6b6b; }
 
+        /* ─── CARD PREVIEW ───────────────────────────── */
         .budget-preview {
-            width: 100%; height: 100px;
-            background: linear-gradient(135deg, rgba(94,224,255,0.1), rgba(139,92,255,0.1));
-            border-radius: 10px; display: flex; align-items: center;
-            justify-content: center; color: #9aa4ad; font-size: 0.9rem;
+            width: 100%;
+            height: 130px;
+            background: linear-gradient(135deg, rgba(94,224,255,0.05), rgba(139,92,255,0.05));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
         }
+
+        .budget-preview canvas {
+            max-height: 120px;
+            max-width: 100%;
+        }
+
+        .preview-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: #9aa4ad;
+            font-size: 0.8rem;
+        }
+
+        .preview-empty span { font-size: 1.6rem; }
+
+        .preview-loading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #9aa4ad;
+            font-size: 0.8rem;
+        }
+
+        .mini-spinner {
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-top-color: #5ee0ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* CARD STATS */
+        .card-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            font-size: 0.78rem;
+        }
+
+        .card-stat-item { color: #9aa4ad; }
+        .card-stat-item .stat-value { font-weight: 700; font-size: 0.85rem; }
+        .card-stat-item .stat-value.income { color: #43e97b; }
+        .card-stat-item .stat-value.expense { color: #fa709a; }
+        .card-stat-item .stat-value.balance-pos { color: #5ee0ff; }
+        .card-stat-item .stat-value.balance-neg { color: #ff6b6b; }
 
         .empty-state {
             text-align: center; padding: 80px 20px;
@@ -222,27 +269,20 @@
         .btn-danger { background: rgba(255,80,80,0.2); color: #ff6b6b; border: 1px solid rgba(255,80,80,0.3) !important; }
         .btn-danger:hover { background: rgba(255,80,80,0.3); }
 
-        /* ─── MOBILE BOTTOM NAV ──────────────────────── */
+        /* ─── BOTTOM NAV ─────────────────────────────── */
         .bottom-nav {
-            display: none;
-            position: fixed; bottom: 0; left: 0; right: 0;
-            height: 64px;
-            background: #111111;
+            display: none; position: fixed; bottom: 0; left: 0; right: 0;
+            height: 64px; background: #111111;
             border-top: 1px solid rgba(255,255,255,0.08);
-            z-index: 100;
-            align-items: center;
-            justify-content: space-around;
-            padding: 0 4px;
+            z-index: 100; align-items: center;
+            justify-content: space-around; padding: 0 4px;
         }
 
         .bottom-nav-item {
-            display: flex; flex-direction: column;
-            align-items: center; gap: 2px;
-            color: #9aa4ad; text-decoration: none;
-            font-size: 0.6rem; padding: 8px 10px;
-            border-radius: 10px; border: none;
-            background: none; cursor: pointer; transition: color 0.2s;
-            flex: 1;
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+            color: #9aa4ad; text-decoration: none; font-size: 0.6rem;
+            padding: 8px 10px; border-radius: 10px; border: none;
+            background: none; cursor: pointer; transition: color 0.2s; flex: 1;
         }
         .bottom-nav-item .nav-icon { font-size: 1.2rem; line-height: 1; }
         .bottom-nav-item.active { color: #5ee0ff; }
@@ -253,52 +293,31 @@
             .sidebar { display: none; }
             .mobile-header { display: flex; }
             .bottom-nav { display: flex; }
-
-            .main-content {
-                margin-left: 0;
-                padding: 20px 16px 90px;
-            }
-
+            .main-content { margin-left: 0; padding: 20px 16px 90px; }
             .dashboard-header { margin-bottom: 24px; }
             .dashboard-header h2 { font-size: 1.5rem; }
-
-            .create-btn {
-                width: 100%;
-                justify-content: center;
-                margin-bottom: 20px;
-            }
-
-            .budgets-grid {
-                grid-template-columns: 1fr;
-                gap: 14px;
-            }
-
+            .create-btn { width: 100%; justify-content: center; margin-bottom: 20px; }
+            .budgets-grid { grid-template-columns: 1fr; gap: 14px; }
             .budget-card { padding: 18px; }
-        }
-
-        @media (max-width: 480px) {
-            .main-content { padding: 16px 12px 90px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- MOBILE TOP HEADER -->
+    <!-- MOBILE HEADER -->
     <div class="mobile-header">
         <h1>💰 Budget Tracker</h1>
         <div class="mobile-avatar" id="mobile-avatar">U</div>
     </div>
 
-    <!-- DESKTOP SIDEBAR -->
+    <!-- SIDEBAR -->
     <aside class="sidebar">
-        <div class="sidebar-header">
-            <h1>💰 Budget Tracker</h1>
-        </div>
+        <div class="sidebar-header"><h1>💰 Budget Tracker</h1></div>
         <ul class="sidebar-menu">
-            <li><a href="#" class="active">🏠 Home</a></li>
-            <li><a href="#">👤 Account</a></li>
-            <li><a href="#">ℹ️ About</a></li>
-            <li><a href="#">❓ How to Use</a></li>
+            <li><a href="dashboard.html" class="active">🏠 Home</a></li>
+            <li><a href="account.html">👤 Account</a></li>
+            <li><a href="about.html">ℹ️ About</a></li>
+            <li><a href="howto.html">❓ How to Use</a></li>
         </ul>
         <div class="sidebar-footer">
             <div class="user-info">
@@ -317,32 +336,16 @@
         </div>
 
         <button class="create-btn" id="create-btn">+ New Budget Project</button>
-
         <div class="budgets-grid" id="budgets-grid"></div>
     </main>
 
     <!-- MOBILE BOTTOM NAV -->
     <nav class="bottom-nav">
-        <button class="bottom-nav-item active">
-            <span class="nav-icon">🏠</span>
-            <span>Home</span>
-        </button>
-        <button class="bottom-nav-item">
-            <span class="nav-icon">👤</span>
-            <span>Account</span>
-        </button>
-        <button class="bottom-nav-item">
-            <span class="nav-icon">ℹ️</span>
-            <span>About</span>
-        </button>
-        <button class="bottom-nav-item">
-            <span class="nav-icon">❓</span>
-            <span>Help</span>
-        </button>
-        <button class="bottom-nav-item" id="mobile-logout-btn">
-            <span class="nav-icon">🚪</span>
-            <span>Logout</span>
-        </button>
+        <a class="bottom-nav-item active" href="dashboard.html"><span class="nav-icon">🏠</span><span>Home</span></a>
+        <a class="bottom-nav-item" href="account.html"><span class="nav-icon">👤</span><span>Account</span></a>
+        <a class="bottom-nav-item" href="about.html"><span class="nav-icon">ℹ️</span><span>About</span></a>
+        <a class="bottom-nav-item" href="howto.html"><span class="nav-icon">❓</span><span>Help</span></a>
+        <button class="bottom-nav-item" id="mobile-logout-btn"><span class="nav-icon">🚪</span><span>Logout</span></button>
     </nav>
 
     <!-- CREATE MODAL -->
@@ -394,11 +397,7 @@
         document.getElementById('mobile-avatar').textContent = initial;
 
         function doLogout() {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userEmail');
-            localStorage.removeItem('currentProjectId');
-            sessionStorage.removeItem('authToken');
-            sessionStorage.removeItem('userEmail');
+            localStorage.clear(); sessionStorage.clear();
             window.location.href = 'login.html';
         }
         document.getElementById('logout-btn').addEventListener('click', doLogout);
@@ -408,19 +407,41 @@
             document.querySelectorAll('.dropdown-menu.show').forEach(d => d.classList.remove('show'));
         });
 
-        // ── LOAD PROJECTS ──────────────────────────────
+        // ── LOAD PROJECTS + FETCH TRANSACTIONS FOR EACH ──
         async function loadProjects() {
             try {
                 const res = await fetch(`${API_URL}/api/projects`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.status === 401 || res.status === 403) { window.location.href = 'login.html'; return; }
-                renderProjects(await res.json());
+                const projects = await res.json();
+
+                // Render cards first (with loading state)
+                renderProjects(projects);
+
+                // Then fetch transactions for each project in parallel
+                const txPromises = projects.map(p =>
+                    fetch(`${API_URL}/api/projects/${p._id}/transactions`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }).then(r => r.json()).then(txs => ({ projectId: p._id, transactions: txs }))
+                    .catch(() => ({ projectId: p._id, transactions: [] }))
+                );
+
+                const allTxData = await Promise.all(txPromises);
+
+                // Render mini charts for each card
+                allTxData.forEach(({ projectId, transactions }) => {
+                    renderMiniChart(projectId, transactions);
+                    renderCardStats(projectId, transactions);
+                });
+
             } catch (e) { console.error(e); }
         }
 
+        // ── RENDER PROJECT CARDS ──────────────────────────
         function renderProjects(projects) {
             const grid = document.getElementById('budgets-grid');
+
             if (projects.length === 0) {
                 grid.innerHTML = `
                     <div class="empty-state">
@@ -429,12 +450,13 @@
                     </div>`;
                 return;
             }
+
             grid.innerHTML = projects.map(p => `
-                <div class="budget-card" onclick="openBudget('${p._id}')">
+                <div class="budget-card" id="card-${p._id}" onclick="openBudget('${p._id}')">
                     <div class="budget-card-header">
                         <div style="flex:1;min-width:0;">
                             <h3>${escapeHtml(p.title)}</h3>
-                            <div class="budget-card-date">Last modified: ${new Date(p.updatedAt).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'})}</div>
+                            <div class="budget-card-date">Last modified: ${new Date(p.updatedAt).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })}</div>
                         </div>
                         <div class="dropdown-wrap">
                             <button class="budget-menu-btn" onclick="event.stopPropagation();toggleMenu('menu-${p._id}')">⋮</button>
@@ -444,9 +466,99 @@
                             </div>
                         </div>
                     </div>
-                    <div class="budget-preview">📊 Budget Overview</div>
+
+                    <!-- PREVIEW CHART AREA -->
+                    <div class="budget-preview" id="preview-${p._id}">
+                        <div class="preview-loading">
+                            <div class="mini-spinner"></div>
+                            <span>Loading...</span>
+                        </div>
+                    </div>
+
+                    <!-- CARD STATS -->
+                    <div class="card-stats" id="stats-${p._id}"></div>
                 </div>
             `).join('');
+        }
+
+        // ── RENDER MINI CHART ─────────────────────────────
+        function renderMiniChart(projectId, transactions) {
+            const previewEl = document.getElementById(`preview-${projectId}`);
+            if (!previewEl) return;
+
+            const expenses = transactions.filter(t => t.type === 'expense');
+
+            if (expenses.length === 0) {
+                previewEl.innerHTML = `
+                    <div class="preview-empty">
+                        <span>📊</span>
+                        <p>No expenses yet</p>
+                    </div>`;
+                return;
+            }
+
+            // Group by description
+            const categories = {};
+            expenses.forEach(t => {
+                categories[t.description] = (categories[t.description] || 0) + t.amount;
+            });
+
+            // Build canvas
+            previewEl.innerHTML = '<canvas></canvas>';
+            const canvas = previewEl.querySelector('canvas');
+            const ctx = canvas.getContext('2d');
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categories),
+                    datasets: [{
+                        data: Object.values(categories),
+                        backgroundColor: ['#667eea','#764ba2','#f093fb','#4facfe','#43e97b','#fa709a','#ffecd2','#a18cd1'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    cutout: '65%',
+                    animation: { duration: 600 }
+                }
+            });
+        }
+
+        // ── RENDER CARD STATS ─────────────────────────────
+        function renderCardStats(projectId, transactions) {
+            const statsEl = document.getElementById(`stats-${projectId}`);
+            if (!statsEl) return;
+
+            if (transactions.length === 0) {
+                statsEl.innerHTML = `<div class="card-stat-item" style="color:#9aa4ad;font-size:0.78rem;">No transactions yet</div>`;
+                return;
+            }
+
+            const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+            const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+            const balance = income - expense;
+
+            statsEl.innerHTML = `
+                <div class="card-stat-item">
+                    <div>Income</div>
+                    <div class="stat-value income">Rp ${income.toLocaleString('id-ID')}</div>
+                </div>
+                <div class="card-stat-item">
+                    <div>Expenses</div>
+                    <div class="stat-value expense">Rp ${expense.toLocaleString('id-ID')}</div>
+                </div>
+                <div class="card-stat-item">
+                    <div>Balance</div>
+                    <div class="stat-value ${balance >= 0 ? 'balance-pos' : 'balance-neg'}">Rp ${balance.toLocaleString('id-ID')}</div>
+                </div>
+            `;
         }
 
         function toggleMenu(id) {
@@ -463,7 +575,7 @@
             window.location.href = 'index.html';
         }
 
-        // ── CREATE ─────────────────────────────────────
+        // ── CREATE ────────────────────────────────────────
         const createModal = document.getElementById('create-modal');
         const titleInput = document.getElementById('budget-title-input');
 
@@ -485,7 +597,7 @@
             } catch (e) { alert('Could not connect to server'); }
         });
 
-        // ── RENAME ─────────────────────────────────────
+        // ── RENAME ────────────────────────────────────────
         const renameModal = document.getElementById('rename-modal');
         const renameTitleInput = document.getElementById('rename-title-input');
         let activeRenameId = null;
@@ -509,7 +621,7 @@
             } catch (e) { alert('Could not connect to server'); }
         });
 
-        // ── DELETE ─────────────────────────────────────
+        // ── DELETE ────────────────────────────────────────
         const deleteModal = document.getElementById('delete-modal');
         let activeDeleteId = null;
 
