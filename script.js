@@ -16,12 +16,14 @@ const amountInput = document.getElementById('amount');
 const typeInput = document.getElementById('type');
 const transactionList = document.getElementById('transaction-list');
 const balanceDisplay = document.getElementById('balance');
+const totalIncomeEl = document.getElementById('total-income');
+const totalExpenseEl = document.getElementById('total-expense');
 
 // ─── GLOBAL STATE ─────────────────────────────────
-let allTransactions = [];       // always up to date
-let aiState = 'idle';           // idle | confirming_income | chatting | done
-let confirmedIncome = null;     // monthly income user confirmed
-let chatHistory = [];           // for chatbot context
+let allTransactions = [];
+let aiState = 'idle';
+let confirmedIncome = null;
+let chatHistory = [];
 
 // ─── LOAD TRANSACTIONS ────────────────────────────
 loadTransactions();
@@ -40,16 +42,19 @@ async function loadTransactions() {
         allTransactions = await res.json();
         renderList(allTransactions);
         renderBalance(allTransactions);
+        renderSummary(allTransactions);
         renderChart(allTransactions);
 
-        // Start AI analysis after transactions load
         if (aiState === 'idle') {
             aiState = 'analyzing';
             setTimeout(() => startAIAnalysis(), 800);
         }
     } catch (error) {
         console.error('Error loading transactions:', error);
-        transactionList.innerHTML = '<li style="text-align:center;color:#aaa;">Could not load transactions.</li>';
+        transactionList.innerHTML = `
+            <li style="text-align:center;color:#aaa;padding:20px;">
+                Could not load transactions.
+            </li>`;
     }
 }
 
@@ -64,6 +69,9 @@ addBtn.addEventListener('click', async function () {
         return;
     }
 
+    addBtn.disabled = true;
+    addBtn.textContent = 'Adding...';
+
     try {
         const res = await fetch(`${API_URL}/api/projects/${projectId}/transactions`, {
             method: 'POST',
@@ -77,12 +85,18 @@ addBtn.addEventListener('click', async function () {
         if (res.ok) {
             descriptionInput.value = '';
             amountInput.value = '';
-            loadTransactions();
+            await loadTransactions();
+
+            // Reset AI so it re-analyzes with new transaction data
+            resetAI();
         } else {
             alert('Failed to add transaction');
         }
     } catch (error) {
         alert('Could not connect to server.');
+    } finally {
+        addBtn.disabled = false;
+        addBtn.textContent = 'Add';
     }
 });
 
@@ -95,8 +109,13 @@ transactionList.addEventListener('click', async function (e) {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (res.ok) loadTransactions();
-            else alert('Failed to delete transaction');
+            if (res.ok) {
+                await loadTransactions();
+                // Reset AI after deleting too
+                resetAI();
+            } else {
+                alert('Failed to delete transaction');
+            }
         } catch (error) {
             alert('Could not connect to server');
         }
@@ -109,7 +128,7 @@ function renderList(transactions) {
 
     if (transactions.length === 0) {
         transactionList.innerHTML = `
-            <li style="text-align:center;color:#aaa;padding:20px;">
+            <li style="text-align:center;color:#aaa;padding:30px;">
                 No transactions yet. Add one above! 👆
             </li>`;
         return;
@@ -118,9 +137,24 @@ function renderList(transactions) {
     transactions.forEach(function (t) {
         const li = document.createElement('li');
         li.classList.add(t.type);
+
+        // Format date
+        const date = new Date(t.createdAt);
+        const dateStr = date.toLocaleDateString('id-ID', {
+            day: 'numeric', month: 'short', year: 'numeric'
+        });
+        const timeStr = date.toLocaleTimeString('id-ID', {
+            hour: '2-digit', minute: '2-digit'
+        });
+
         li.innerHTML = `
-            <span>${t.description}</span>
-            <span>${t.type === 'income' ? '+' : '-'}Rp ${t.amount.toLocaleString('id-ID', { minimumFractionDigits: 0 })}</span>
+            <div class="transaction-info">
+                <div class="transaction-desc">${t.description}</div>
+                <div class="transaction-date">${dateStr} · ${timeStr}</div>
+            </div>
+            <span class="transaction-amount">
+                ${t.type === 'income' ? '+' : '-'}Rp ${t.amount.toLocaleString('id-ID', { minimumFractionDigits: 0 })}
+            </span>
             <button class="delete-btn" data-id="${t._id}">🗑️</button>
         `;
         transactionList.appendChild(li);
@@ -134,21 +168,54 @@ function renderBalance(transactions) {
         balance += t.type === 'income' ? t.amount : -t.amount;
     });
     balanceDisplay.textContent = `Rp ${balance.toLocaleString('id-ID', { minimumFractionDigits: 0 })}`;
-    balanceDisplay.style.color = balance >= 0 ? '#4caf50' : '#e91e63';
+    balanceDisplay.style.color = balance >= 0 ? '#fff' : '#ffa0a0';
+}
+
+// ─── RENDER INCOME / EXPENSE SUMMARY ─────────────
+function renderSummary(transactions) {
+    const totalIncome = transactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+    const totalExpense = transactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+    totalIncomeEl.textContent = `Rp ${totalIncome.toLocaleString('id-ID', { minimumFractionDigits: 0 })}`;
+    totalExpenseEl.textContent = `Rp ${totalExpense.toLocaleString('id-ID', { minimumFractionDigits: 0 })}`;
 }
 
 // ─── RENDER CHART ─────────────────────────────────
 let myChart = null;
 
 function renderChart(transactions) {
+    const chartContainer = document.getElementById('chart-container');
+    const canvas = document.getElementById('myChart');
+
+    const expenses = transactions.filter(t => t.type === 'expense');
+
+    // Empty state
+    if (expenses.length === 0) {
+        canvas.style.display = 'none';
+        chartContainer.innerHTML = `
+            <div class="chart-empty">
+                <span>📊</span>
+                <p>No expense data yet.</p>
+                <p>Add some expenses to see the chart!</p>
+            </div>
+        `;
+        return;
+    }
+
+    chartContainer.innerHTML = '';
+    canvas.style.display = 'block';
+
     const categories = {};
-    transactions.forEach(t => {
-        if (t.type === 'expense') {
-            categories[t.description] = (categories[t.description] || 0) + t.amount;
-        }
+    expenses.forEach(t => {
+        categories[t.description] = (categories[t.description] || 0) + t.amount;
     });
 
-    const ctx = document.getElementById('myChart').getContext('2d');
+    const ctx = canvas.getContext('2d');
     if (myChart) myChart.destroy();
 
     myChart = new Chart(ctx, {
@@ -157,7 +224,7 @@ function renderChart(transactions) {
             labels: Object.keys(categories),
             datasets: [{
                 data: Object.values(categories),
-                backgroundColor: ['#667eea','#764ba2','#f093fb','#4facfe','#43e97b','#fa709a']
+                backgroundColor: ['#667eea','#764ba2','#f093fb','#4facfe','#43e97b','#fa709a','#ffecd2','#a18cd1']
             }]
         },
         options: {
@@ -171,7 +238,6 @@ function renderChart(transactions) {
 //  AI SECTION
 // ═══════════════════════════════════════════════════
 
-// ─── CALL GITHUB MODELS API ───────────────────────
 async function callAI(messages) {
     const res = await fetch(AI_ENDPOINT, {
         method: 'POST',
@@ -183,17 +249,14 @@ async function callAI(messages) {
     });
 
     const data = await res.json();
-    
-    // Debug: see what Railway is actually returning
     console.log('AI response:', data);
 
     if (!res.ok) throw new Error('AI API error: ' + JSON.stringify(data));
     if (!data.choices || !data.choices[0]) throw new Error('Unexpected AI response: ' + JSON.stringify(data));
-    
+
     return data.choices[0].message.content;
 }
 
-// ─── RENDER AI MESSAGE ────────────────────────────
 function addAIMessage(html) {
     const area = document.getElementById('ai-chat-area');
     const div = document.createElement('div');
@@ -222,9 +285,7 @@ function showTyping() {
     div.id = 'typing-indicator';
     div.innerHTML = `
         <div class="ai-avatar">🤖</div>
-        <div class="typing-dots">
-            <span></span><span></span><span></span>
-        </div>
+        <div class="typing-dots"><span></span><span></span><span></span></div>
     `;
     area.appendChild(div);
     area.scrollTop = area.scrollHeight;
@@ -235,7 +296,6 @@ function hideTyping() {
     if (el) el.remove();
 }
 
-// ─── FORMAT TRANSACTIONS FOR AI ───────────────────
 function formatTransactionsForAI(transactions) {
     if (transactions.length === 0) return 'Belum ada transaksi.';
     return transactions.map(t =>
@@ -243,7 +303,24 @@ function formatTransactionsForAI(transactions) {
     ).join('\n');
 }
 
-// ─── STEP 1: ANALYZE TRANSACTIONS FIRST ───────────
+// ─── RESET AI (called after add/delete transaction) ─
+function resetAI() {
+    aiState = 'idle';
+    confirmedIncome = null;
+    chatHistory = [];
+    document.getElementById('ai-chat-area').innerHTML = '';
+    setInputEnabled(false);
+
+    aiState = 'analyzing';
+    setTimeout(() => startAIAnalysis(), 600);
+}
+
+// Refresh button
+document.getElementById('ai-refresh-btn').addEventListener('click', () => {
+    resetAI();
+});
+
+// ─── STEP 1: ANALYZE ──────────────────────────────
 async function startAIAnalysis() {
     if (allTransactions.length === 0) {
         addAIMessage('Hei! Tambahkan beberapa transaksi dulu ya, baru aku bisa analisis keuangan kamu 😊');
@@ -255,7 +332,7 @@ async function startAIAnalysis() {
 
     const txList = formatTransactionsForAI(allTransactions);
 
-    const systemPrompt = `Kamu adalah asisten keuangan personal yang cerdas dan ramah. 
+    const systemPrompt = `Kamu adalah asisten keuangan personal yang cerdas dan ramah.
 Kamu bisa memahami bahasa Indonesia dan Inggris dengan baik.
 Tugasmu adalah menganalisis transaksi keuangan user dan membantu menilai kesehatan keuangan mereka.
 Selalu jawab dalam bahasa yang sama dengan yang digunakan user dalam transaksinya.
@@ -283,7 +360,6 @@ Jawab dalam 2-3 kalimat singkat, ramah, dan natural. Sebutkan nama transaksi yan
         aiState = 'confirming_income';
         setInputEnabled(true);
 
-        // save to chat history
         chatHistory = [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: prompt },
@@ -292,12 +368,12 @@ Jawab dalam 2-3 kalimat singkat, ramah, dan natural. Sebutkan nama transaksi yan
 
     } catch (err) {
         hideTyping();
-        addAIMessage('Maaf, tidak bisa terhubung ke AI sekarang. Coba refresh halaman ya.');
+        addAIMessage('Maaf, tidak bisa terhubung ke AI sekarang. Coba klik 🔄 Refresh Analysis ya.');
         console.error(err);
     }
 }
 
-// ─── STEP 2: HANDLE USER CONFIRMATION ─────────────
+// ─── STEP 2: CONFIRM INCOME ───────────────────────
 async function handleIncomeConfirmation(userInput) {
     chatHistory.push({ role: 'user', content: userInput });
     showTyping();
@@ -326,15 +402,12 @@ Tugas kamu:
         const reply = await callAI([...chatHistory.slice(0, 1), { role: 'user', content: confirmPrompt }]);
         hideTyping();
 
-        // Check if income confirmed
         const match = reply.match(/INCOME_CONFIRMED:(\d+)/);
         if (match) {
             confirmedIncome = parseInt(match[1]);
             const cleanReply = reply.replace(/INCOME_CONFIRMED:\d+\n?/, '').trim();
             if (cleanReply) addAIMessage(cleanReply);
             chatHistory.push({ role: 'assistant', content: reply });
-
-            // Show health dashboard
             setTimeout(() => showHealthDashboard(confirmedIncome, totalExpense), 500);
         } else {
             addAIMessage(reply);
@@ -348,7 +421,7 @@ Tugas kamu:
     }
 }
 
-// ─── STEP 3: SHOW HEALTH DASHBOARD ────────────────
+// ─── STEP 3: HEALTH DASHBOARD ─────────────────────
 function showHealthDashboard(income, expense) {
     const savings = income - expense;
     const savingsRate = income > 0 ? Math.round((savings / income) * 100) : 0;
@@ -382,7 +455,7 @@ function showHealthDashboard(income, expense) {
             </div>
             <div class="health-row">
                 <span class="label">🏦 Sisa / Tabungan</span>
-                <span class="value" style="color: ${savings >= 0 ? '#2e7d32' : '#c62828'}">
+                <span class="value" style="color:${savings >= 0 ? '#2e7d32' : '#c62828'}">
                     Rp ${savings.toLocaleString('id-ID')}
                 </span>
             </div>
@@ -404,7 +477,7 @@ function showHealthDashboard(income, expense) {
     setInputEnabled(false);
 }
 
-// ─── STEP 4: OPEN CHATBOT CONSULT ─────────────────
+// ─── STEP 4: CHATBOT ──────────────────────────────
 function startChatConsult() {
     aiState = 'chatting';
     setInputEnabled(true);
@@ -413,7 +486,6 @@ function startChatConsult() {
     const txList = formatTransactionsForAI(allTransactions);
     const totalExpense = allTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
 
-    // Set up chatbot system context
     chatHistory = [{
         role: 'system',
         content: `Kamu adalah konsultan keuangan personal yang ramah dan berpengetahuan luas.
@@ -434,7 +506,6 @@ Jaga jawaban tetap ringkas (max 4-5 kalimat kecuali user minta lebih detail).`
     addAIMessage('Siap! Tanya apa saja soal keuangan kamu. Misalnya: <i>"Gimana caranya aku bisa nabung lebih banyak?"</i> atau <i>"Pengeluaran mana yang harus dikurangi?"</i> 💪');
 }
 
-// ─── CHATBOT HANDLER ──────────────────────────────
 async function handleChatMessage(userInput) {
     chatHistory.push({ role: 'user', content: userInput });
     showTyping();
@@ -451,7 +522,7 @@ async function handleChatMessage(userInput) {
     }
 }
 
-// ─── INPUT HANDLER ────────────────────────────────
+// ─── INPUT HANDLING ───────────────────────────────
 function setInputEnabled(enabled) {
     const input = document.getElementById('ai-input');
     const btn = document.getElementById('ai-send-btn');
@@ -468,7 +539,6 @@ async function handleAIInput() {
     const input = document.getElementById('ai-input');
     const text = input.value.trim();
     if (!text) return;
-
     input.value = '';
     addUserMessage(text);
 
@@ -479,5 +549,4 @@ async function handleAIInput() {
     }
 }
 
-// Disable input until AI starts
 setInputEnabled(false);

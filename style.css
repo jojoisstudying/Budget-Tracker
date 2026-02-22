@@ -24,15 +24,27 @@ header {
     margin-bottom: 20px;
 }
 
-header h1 {
-    font-size: 2rem;
-    margin-bottom: 8px;
+header h1 { font-size: 2rem; margin-bottom: 8px; }
+#balance { font-size: 1.8rem; font-weight: bold; }
+
+/* INCOME / EXPENSE SUMMARY */
+.summary-bar {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
-#balance {
-    font-size: 1.8rem;
-    font-weight: bold;
+.summary-item {
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 8px 20px;
+    font-size: 0.9rem;
 }
+
+.summary-item .s-label { opacity: 0.85; margin-bottom: 2px; font-size: 0.8rem; }
+.summary-item .s-value { font-weight: 700; font-size: 1rem; }
 
 /* MAIN LAYOUT */
 main {
@@ -50,10 +62,7 @@ section {
     box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 
-section h2 {
-    margin-bottom: 16px;
-    color: #667eea;
-}
+section h2 { margin-bottom: 16px; color: #667eea; }
 
 /* FORM */
 #form-section input,
@@ -85,14 +94,12 @@ section h2 {
     transition: opacity 0.3s;
 }
 
-#add-btn:hover {
-    opacity: 0.9;
-}
+#add-btn:hover { opacity: 0.9; }
 
 /* TRANSACTION LIST */
 #transaction-list {
     list-style: none;
-    max-height: 300px;
+    max-height: 320px;
     overflow-y: auto;
 }
 
@@ -100,30 +107,64 @@ section h2 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px;
+    padding: 10px 12px;
     margin-bottom: 8px;
     border-radius: 8px;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     gap: 8px;
 }
 
-#transaction-list li span:first-child {
+.transaction-info {
     flex: 1;
     min-width: 0;
+}
+
+.transaction-desc {
+    font-weight: 600;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    margin-bottom: 2px;
 }
 
-.income {
-    background: #e8f5e9;
-    border-left: 4px solid #4caf50;
+.transaction-date {
+    font-size: 0.75rem;
+    color: #999;
 }
 
-.expense {
-    background: #fce4ec;
-    border-left: 4px solid #e91e63;
+.transaction-amount {
+    font-weight: 700;
+    white-space: nowrap;
+    font-size: 0.9rem;
 }
+
+.income { background: #e8f5e9; border-left: 4px solid #4caf50; }
+.expense { background: #fce4ec; border-left: 4px solid #e91e63; }
+
+.income .transaction-amount { color: #2e7d32; }
+.expense .transaction-amount { color: #c62828; }
+
+/* LOADING SPINNER */
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: #999;
+    gap: 12px;
+}
+
+.spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #e0e0e0;
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* CHART */
 #chart-section {
@@ -131,33 +172,42 @@ section h2 {
     padding: 24px;
     border-radius: 16px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    margin-bottom: 80px; /* space for mobile bottom nav */
 }
 
-#chart-section h2 {
-    margin-bottom: 16px;
-    color: #667eea;
+#chart-section h2 { margin-bottom: 16px; color: #667eea; }
+
+#myChart { max-height: 300px; }
+
+/* EMPTY CHART STATE */
+.chart-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: #aaa;
+    text-align: center;
+    gap: 10px;
 }
 
-#myChart {
-    max-height: 300px;
-}
+.chart-empty span { font-size: 2.5rem; }
+.chart-empty p { font-size: 0.9rem; }
 
+/* DELETE BTN */
 .delete-btn {
     background: none;
     border: none;
     cursor: pointer;
     font-size: 1rem;
-    opacity: 0.6;
+    opacity: 0.5;
     transition: opacity 0.2s;
     flex-shrink: 0;
+    padding: 4px;
 }
 
-.delete-btn:hover {
-    opacity: 1;
-}
+.delete-btn:hover { opacity: 1; }
 
-/* TOP NAV (back button bar) */
+/* TOP NAV */
 .top-nav {
     display: flex;
     align-items: center;
@@ -182,9 +232,7 @@ section h2 {
     white-space: nowrap;
 }
 
-.back-btn:hover {
-    opacity: 0.85;
-}
+.back-btn:hover { opacity: 0.85; }
 
 .project-title-label {
     font-size: 1rem;
@@ -195,59 +243,243 @@ section h2 {
     white-space: nowrap;
 }
 
-#project-title {
-    font-weight: 700;
-    color: #667eea;
+#project-title { font-weight: 700; color: #667eea; }
+
+/* ─── AI DASHBOARD ───────────────────────────── */
+#ai-section {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-top: 20px;
+    overflow: hidden;
 }
 
-/* ─── MOBILE ──────────────────────────────────── */
+.ai-section-header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    padding: 20px 24px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ai-section-header h2 { font-size: 1.2rem; margin-bottom: 4px; }
+.ai-section-header p { font-size: 0.85rem; opacity: 0.85; }
+
+.ai-refresh-btn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ai-refresh-btn:hover { background: rgba(255,255,255,0.3); }
+
+#ai-chat-area {
+    padding: 20px 24px;
+    min-height: 180px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.ai-message {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    align-items: flex-start;
+}
+
+.ai-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.ai-bubble {
+    background: #f0f2f5;
+    border-radius: 0 12px 12px 12px;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #333;
+    max-width: 85%;
+}
+
+.user-message {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 16px;
+}
+
+.user-bubble {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 12px 0 12px 12px;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    max-width: 85%;
+}
+
+.ai-typing {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.typing-dots {
+    display: flex;
+    gap: 4px;
+    background: #f0f2f5;
+    padding: 12px 16px;
+    border-radius: 0 12px 12px 12px;
+}
+
+.typing-dots span {
+    width: 8px;
+    height: 8px;
+    background: #999;
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+}
+
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+}
+
+/* HEALTH CARD */
+.health-card {
+    background: #f8f9ff;
+    border: 2px solid #667eea;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 8px 0;
+}
+
+.health-card h3 { font-size: 1rem; color: #667eea; margin-bottom: 14px; }
+
+.health-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e8e8f0;
+    font-size: 0.9rem;
+}
+
+.health-row:last-of-type { border-bottom: none; }
+.health-row .label { color: #666; }
+.health-row .value { font-weight: 700; color: #333; }
+
+.health-status {
+    margin-top: 14px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.status-healthy { background: #e8f5e9; color: #2e7d32; }
+.status-warning { background: #fff8e1; color: #f57f17; }
+.status-danger  { background: #fce4ec; color: #c62828; }
+
+/* AI INPUT */
+#ai-input-area {
+    display: flex;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid #eee;
+}
+
+#ai-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: border 0.2s;
+    outline: none;
+}
+
+#ai-input:focus { border-color: #667eea; }
+
+#ai-send-btn {
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+}
+
+#ai-send-btn:hover { opacity: 0.9; }
+#ai-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.consult-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.consult-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+}
+
+/* ─── MOBILE ─────────────────────────────────── */
 @media (max-width: 768px) {
-    body {
-        padding: 12px;
-        padding-bottom: 80px; /* room for bottom nav */
-    }
+    body { padding: 12px; padding-bottom: 80px; }
 
-    header {
-        padding: 20px 16px;
-        border-radius: 12px;
-    }
+    header { padding: 20px 16px; border-radius: 12px; }
+    header h1 { font-size: 1.3rem; }
+    #balance { font-size: 1.4rem; }
 
-    header h1 {
-        font-size: 1.3rem;
-    }
+    main { grid-template-columns: 1fr; gap: 12px; }
+    section { padding: 16px; }
 
-    #balance {
-        font-size: 1.4rem;
-    }
+    #transaction-list { max-height: 250px; }
+    #chart-section { padding: 16px; }
 
-    main {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
+    .top-nav { gap: 10px; margin-bottom: 12px; }
+    .project-title-label { font-size: 0.85rem; }
+    .back-btn { padding: 7px 12px; font-size: 0.85rem; }
 
-    section {
-        padding: 16px;
-    }
+    #ai-input-area { padding: 12px 16px; }
+    #ai-chat-area { padding: 16px; }
+    .ai-section-header { padding: 16px; flex-wrap: wrap; gap: 10px; }
 
-    #transaction-list {
-        max-height: 250px;
-    }
-
-    #chart-section {
-        padding: 16px;
-    }
-
-    .top-nav {
-        gap: 10px;
-        margin-bottom: 12px;
-    }
-
-    .project-title-label {
-        font-size: 0.85rem;
-    }
-
-    .back-btn {
-        padding: 7px 12px;
-        font-size: 0.85rem;
-    }
+    .summary-bar { gap: 8px; }
+    .summary-item { padding: 6px 14px; }
 }

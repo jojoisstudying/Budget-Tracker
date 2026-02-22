@@ -6,264 +6,10 @@
     <title>Budget Tracker</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .top-nav {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-
-        .back-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: opacity 0.2s;
-            white-space: nowrap;
-        }
-
-        .back-btn:hover { opacity: 0.85; }
-
-        .project-title-label {
-            font-size: 1rem;
-            color: #555;
-            font-weight: 500;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        #project-title { font-weight: 700; color: #667eea; }
-
-        /* ─── AI DASHBOARD ───────────────────────────── */
-        #ai-section {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            margin-top: 20px;
-            overflow: hidden;
-        }
-
-        .ai-section-header {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            padding: 20px 24px;
-            color: white;
-        }
-
-        .ai-section-header h2 {
-            font-size: 1.2rem;
-            margin-bottom: 4px;
-        }
-
-        .ai-section-header p {
-            font-size: 0.85rem;
-            opacity: 0.85;
-        }
-
-        /* AI CHAT AREA */
-        #ai-chat-area {
-            padding: 20px 24px;
-            min-height: 180px;
-        }
-
-        .ai-message {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-            align-items: flex-start;
-        }
-
-        .ai-avatar {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            flex-shrink: 0;
-        }
-
-        .ai-bubble {
-            background: #f0f2f5;
-            border-radius: 0 12px 12px 12px;
-            padding: 12px 16px;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            color: #333;
-            max-width: 85%;
-        }
-
-        .user-message {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 16px;
-        }
-
-        .user-bubble {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border-radius: 12px 0 12px 12px;
-            padding: 12px 16px;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            max-width: 85%;
-        }
-
-        .ai-typing {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .typing-dots {
-            display: flex;
-            gap: 4px;
-            background: #f0f2f5;
-            padding: 12px 16px;
-            border-radius: 0 12px 12px 12px;
-        }
-
-        .typing-dots span {
-            width: 8px;
-            height: 8px;
-            background: #999;
-            border-radius: 50%;
-            animation: bounce 1.2s infinite;
-        }
-
-        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes bounce {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-6px); }
-        }
-
-        /* HEALTH DASHBOARD CARD */
-        .health-card {
-            background: #f8f9ff;
-            border: 2px solid #667eea;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 8px 0;
-        }
-
-        .health-card h3 {
-            font-size: 1rem;
-            color: #667eea;
-            margin-bottom: 14px;
-        }
-
-        .health-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #e8e8f0;
-            font-size: 0.9rem;
-        }
-
-        .health-row:last-of-type { border-bottom: none; }
-
-        .health-row .label { color: #666; }
-        .health-row .value { font-weight: 700; color: #333; }
-
-        .health-status {
-            margin-top: 14px;
-            padding: 12px 16px;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 1rem;
-            text-align: center;
-        }
-
-        .status-healthy { background: #e8f5e9; color: #2e7d32; }
-        .status-warning { background: #fff8e1; color: #f57f17; }
-        .status-danger  { background: #fce4ec; color: #c62828; }
-
-        /* AI INPUT BAR */
-        #ai-input-area {
-            display: flex;
-            gap: 10px;
-            padding: 16px 24px;
-            border-top: 1px solid #eee;
-        }
-
-        #ai-input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            transition: border 0.2s;
-            outline: none;
-        }
-
-        #ai-input:focus { border-color: #667eea; }
-
-        #ai-send-btn {
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.2s;
-            white-space: nowrap;
-        }
-
-        #ai-send-btn:hover { opacity: 0.9; }
-        #ai-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        /* CONSULT BUTTON */
-        .consult-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 14px;
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .consult-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102,126,234,0.4);
-        }
-
-        @media (max-width: 768px) {
-            .top-nav { gap: 10px; margin-bottom: 12px; }
-            .project-title-label { font-size: 0.85rem; }
-            .back-btn { padding: 7px 12px; font-size: 0.85rem; }
-            #ai-input-area { padding: 12px 16px; }
-            #ai-chat-area { padding: 16px; }
-            .ai-section-header { padding: 16px; }
-        }
-    </style>
 </head>
 <body>
 
-    <!-- Back to Dashboard -->
+    <!-- Top Nav -->
     <div style="max-width: 1200px; margin: 0 auto; padding: 20px 20px 0;">
         <div class="top-nav">
             <a class="back-btn" href="dashboard.html">← Dashboard</a>
@@ -274,13 +20,23 @@
     <header>
         <h1>Budget Tracker</h1>
         <p>Balance: <span id="balance">Rp0</span></p>
+        <div class="summary-bar">
+            <div class="summary-item">
+                <div class="s-label">💰 Total Income</div>
+                <div class="s-value" id="total-income">Rp0</div>
+            </div>
+            <div class="summary-item">
+                <div class="s-label">💸 Total Expenses</div>
+                <div class="s-value" id="total-expense">Rp0</div>
+            </div>
+        </div>
     </header>
 
     <main>
         <section id="form-section">
             <h2>Add Transaction</h2>
-            <input type="text" id="description" placeholder="description (e.g. Food)">
-            <input type="number" id="amount" placeholder="amount (e.g. 50000)">
+            <input type="text" id="description" placeholder="Description (e.g. Makan siang)">
+            <input type="number" id="amount" placeholder="Amount (e.g. 50000)">
             <select id="type">
                 <option value="income">Income</option>
                 <option value="expense">Expense</option>
@@ -289,27 +45,41 @@
         </section>
 
         <section id="list-section">
-            <h2>Transaction</h2>
-            <ul id="transaction-list"></ul>
+            <h2>Transactions</h2>
+            <ul id="transaction-list">
+                <li>
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <span>Loading transactions...</span>
+                    </div>
+                </li>
+            </ul>
         </section>
     </main>
 
     <div id="chart-section">
-        <h2>Spending overview</h2>
-        <canvas id="myChart"></canvas>
+        <h2>Spending Overview</h2>
+        <div id="chart-container">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <span>Loading chart...</span>
+            </div>
+        </div>
+        <canvas id="myChart" style="display:none;"></canvas>
     </div>
 
-    <!-- ── AI FINANCIAL HEALTH SECTION ────────────── -->
+    <!-- AI FINANCIAL HEALTH -->
     <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px 40px;">
         <div id="ai-section">
             <div class="ai-section-header">
-                <h2>💡 AI Financial Health</h2>
-                <p>AI akan menganalisis transaksi kamu dan memberikan saran keuangan</p>
+                <div>
+                    <h2>💡 AI Financial Health</h2>
+                    <p>AI analyzes your transactions and gives financial advice</p>
+                </div>
+                <button class="ai-refresh-btn" id="ai-refresh-btn">🔄 Refresh Analysis</button>
             </div>
 
-            <div id="ai-chat-area">
-                <!-- Messages appear here -->
-            </div>
+            <div id="ai-chat-area"></div>
 
             <div id="ai-input-area">
                 <input type="text" id="ai-input" placeholder="Ketik pesan kamu..." />
@@ -320,7 +90,6 @@
 
     <script src="script.js"></script>
     <script>
-        // Set project title
         const _token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         const _projectId = localStorage.getItem('currentProjectId');
         const API = 'https://budget-tracker-backend-production-16e4.up.railway.app';
