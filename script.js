@@ -654,15 +654,16 @@ Jawab dalam 2-3 kalimat singkat, ramah, dan natural.`;
 
 // ─── STEP 2: CONFIRM INCOME ───────────────────────
 async function handleIncomeConfirmation(userInput) {
-    // Quick check — if user just says yes, extract income from transactions directly
-    const yesWords = ['iya', 'ya', 'yes', 'benar', 'betul', 'yep', 'yup', 'ok', 'oke', 'correct', 'terkonfirmasi', 'confirmed'];
-    const isJustYes = yesWords.some(w => userInput.toLowerCase().trim().includes(w));
-
     const incomeTransactions = allTransactions.filter(t => t.type === 'income');
     const totalExpense = allTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
 
-    if (isJustYes && incomeTransactions.length > 0) {
-        // Use the largest income transaction as confirmed income
+    const yesWords = ['iya', 'ya', 'yes', 'benar', 'betul', 'yep', 'yup', 'ok', 'oke', 'correct', 'terkonfirmasi', 'confirmed'];
+    const noWords = ['tidak', 'bukan', 'no', 'nope', 'salah', 'beda', 'lain'];
+    const lowerInput = userInput.toLowerCase().trim();
+    const isJustYes = yesWords.some(w => lowerInput === w || lowerInput.startsWith(w + ' ') || lowerInput.endsWith(' ' + w));
+    const isNo = noWords.some(w => lowerInput.includes(w));
+
+    if (!isNo && isJustYes && incomeTransactions.length > 0) {
         const largestIncome = incomeTransactions.reduce((max, t) => t.amount > max.amount ? t : max, incomeTransactions[0]);
         confirmedIncome = largestIncome.amount;
         addAIMessage(`Oke! Pemasukan bulanan kamu adalah Rp ${confirmedIncome.toLocaleString('id-ID')} dari "${largestIncome.description}". Sebentar, aku analisis dulu ya... 🔍`);
