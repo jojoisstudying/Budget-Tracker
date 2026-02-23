@@ -78,6 +78,46 @@
         <canvas id="myChart" style="display:none;"></canvas>
     </div>
 
+    <!-- MONTHLY REPORT -->
+    <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px 20px;">
+        <div id="monthly-report-section" class="report-section">
+            <div class="report-header" onclick="toggleSection('monthly-report-body')">
+                <div>
+                    <h2>📅 Monthly Report</h2>
+                    <p>Breakdown of income & expenses per month</p>
+                </div>
+                <span class="report-toggle" id="monthly-toggle">▼</span>
+            </div>
+            <div id="monthly-report-body" class="report-body" style="display:none;">
+                <div id="monthly-report-content">
+                    <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- YEARLY REPORT -->
+    <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px 20px;">
+        <div id="yearly-report-section" class="report-section">
+            <div class="report-header" onclick="toggleSection('yearly-report-body')">
+                <div>
+                    <h2>📊 Yearly Report</h2>
+                    <p>Income vs Expenses per month this year</p>
+                </div>
+                <span class="report-toggle" id="yearly-toggle">▼</span>
+            </div>
+            <div id="yearly-report-body" class="report-body" style="display:none;">
+                <div id="yearly-report-content" style="padding: 20px;">
+                    <canvas id="yearlyChart"></canvas>
+                    <div id="yearly-empty" style="display:none;" class="chart-empty">
+                        <span>📊</span>
+                        <p>No data for this year yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- AI FINANCIAL HEALTH -->
     <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px 40px;">
         <div id="ai-section">

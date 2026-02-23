@@ -78,6 +78,14 @@ async function loadTransactions() {
         renderSummary(allTransactions);
         renderChart(allTransactions);
 
+        // Re-render reports if they're open
+        if (document.getElementById('monthly-report-body').style.display !== 'none') {
+            renderMonthlyReport(allTransactions);
+        }
+        if (document.getElementById('yearly-report-body').style.display !== 'none') {
+            renderYearlyReport(allTransactions);
+        }
+
         if (aiState === 'idle') {
             aiState = 'analyzing';
             setTimeout(() => startAIAnalysis(), 800);
@@ -247,6 +255,201 @@ function renderChart(transactions) {
         options: {
             responsive: true,
             plugins: { legend: { position: 'bottom' } }
+        }
+    });
+}
+
+// ─── TOGGLE REPORT SECTIONS ───────────────────────
+function toggleSection(bodyId) {
+    const body = document.getElementById(bodyId);
+    const isMonthly = bodyId === 'monthly-report-body';
+    const toggleId = isMonthly ? 'monthly-toggle' : 'yearly-toggle';
+    const toggle = document.getElementById(toggleId);
+    const isOpen = body.style.display !== 'none';
+
+    body.style.display = isOpen ? 'none' : 'block';
+    toggle.classList.toggle('open', !isOpen);
+
+    // Render on first open
+    if (!isOpen) {
+        if (isMonthly) renderMonthlyReport(allTransactions);
+        else renderYearlyReport(allTransactions);
+    }
+}
+
+// ─── MONTHLY REPORT ───────────────────────────────
+function renderMonthlyReport(transactions) {
+    const content = document.getElementById('monthly-report-content');
+
+    if (transactions.length === 0) {
+        content.innerHTML = `<div class="chart-empty"><span>📅</span><p>No transactions yet.</p></div>`;
+        return;
+    }
+
+    // Group by year-month
+    const months = {};
+    transactions.forEach(t => {
+        const d = new Date(t.createdAt);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (!months[key]) months[key] = [];
+        months[key].push(t);
+    });
+
+    // Sort newest first
+    const sortedKeys = Object.keys(months).sort((a, b) => b.localeCompare(a));
+
+    content.innerHTML = sortedKeys.map(key => {
+        const txs = months[key];
+        const [year, month] = key.split('-');
+        const monthName = new Date(year, month - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+
+        const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+        const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+        const balance = income - expense;
+        const savingsRate = income > 0 ? Math.round((balance / income) * 100) : 0;
+
+        let statusClass, statusText, statusIcon;
+        if (savingsRate >= 20) { statusClass = 'healthy'; statusIcon = '✅'; statusText = 'Sehat'; }
+        else if (savingsRate >= 0) { statusClass = 'warning'; statusIcon = '⚠️'; statusText = 'Perhatian'; }
+        else { statusClass = 'danger'; statusIcon = '🔴'; statusText = 'Defisit'; }
+
+        const txRows = txs.map(t => `
+            <li class="month-tx-item">
+                <span class="month-tx-desc">
+                    <span style="font-size:0.8rem;">${t.categoryEmoji || '📦'}</span>
+                    ${t.description}
+                </span>
+                <span class="month-tx-amount ${t.type === 'income' ? 'inc' : 'exp'}">
+                    ${t.type === 'income' ? '+' : '-'}Rp ${t.amount.toLocaleString('id-ID')}
+                </span>
+            </li>
+        `).join('');
+
+        return `
+            <div class="month-item">
+                <div class="month-header" onclick="toggleMonth('month-body-${key}', 'chevron-${key}')">
+                    <span class="month-name">📅 ${monthName}</span>
+                    <div class="month-summary">
+                        <span class="month-income">+Rp ${income.toLocaleString('id-ID')}</span>
+                        <span class="month-expense">-Rp ${expense.toLocaleString('id-ID')}</span>
+                        <span class="month-status ${statusClass}">${statusIcon} ${statusText}</span>
+                        <span class="month-chevron" id="chevron-${key}">▼</span>
+                    </div>
+                </div>
+                <div class="month-body" id="month-body-${key}">
+                    <ul class="month-tx-list">${txRows}</ul>
+                    <div class="month-totals">
+                        <div class="month-total-item">
+                            <div class="month-total-label">Income</div>
+                            <div class="month-total-value" style="color:#2e7d32;">Rp ${income.toLocaleString('id-ID')}</div>
+                        </div>
+                        <div class="month-total-item">
+                            <div class="month-total-label">Expenses</div>
+                            <div class="month-total-value" style="color:#c62828;">Rp ${expense.toLocaleString('id-ID')}</div>
+                        </div>
+                        <div class="month-total-item">
+                            <div class="month-total-label">Balance</div>
+                            <div class="month-total-value" style="color:${balance >= 0 ? '#2e7d32' : '#c62828'}">Rp ${balance.toLocaleString('id-ID')}</div>
+                        </div>
+                        <div class="month-total-item">
+                            <div class="month-total-label">Savings Rate</div>
+                            <div class="month-total-value">${savingsRate}%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function toggleMonth(bodyId, chevronId) {
+    const body = document.getElementById(bodyId);
+    const chevron = document.getElementById(chevronId);
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    chevron.classList.toggle('open', !isOpen);
+}
+
+// ─── YEARLY REPORT ────────────────────────────────
+let yearlyChart = null;
+
+function renderYearlyReport(transactions) {
+    const currentYear = new Date().getFullYear();
+    const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    const incomeByMonth = new Array(12).fill(0);
+    const expenseByMonth = new Array(12).fill(0);
+
+    transactions.forEach(t => {
+        const d = new Date(t.createdAt);
+        if (d.getFullYear() !== currentYear) return;
+        const m = d.getMonth();
+        if (t.type === 'income') incomeByMonth[m] += t.amount;
+        else expenseByMonth[m] += t.amount;
+    });
+
+    const hasData = incomeByMonth.some(v => v > 0) || expenseByMonth.some(v => v > 0);
+
+    const canvas = document.getElementById('yearlyChart');
+    const emptyEl = document.getElementById('yearly-empty');
+
+    if (!hasData) {
+        canvas.style.display = 'none';
+        emptyEl.style.display = 'flex';
+        return;
+    }
+
+    canvas.style.display = 'block';
+    emptyEl.style.display = 'none';
+
+    if (yearlyChart) yearlyChart.destroy();
+
+    yearlyChart = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: monthLabels,
+            datasets: [
+                {
+                    label: 'Income',
+                    data: incomeByMonth,
+                    backgroundColor: 'rgba(76,175,80,0.7)',
+                    borderColor: '#4caf50',
+                    borderWidth: 1,
+                    borderRadius: 6
+                },
+                {
+                    label: 'Expenses',
+                    data: expenseByMonth,
+                    backgroundColor: 'rgba(233,30,99,0.7)',
+                    borderColor: '#e91e63',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                title: {
+                    display: true,
+                    text: `Income vs Expenses — ${currentYear}`,
+                    font: { size: 14 }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `${ctx.dataset.label}: Rp ${ctx.parsed.y.toLocaleString('id-ID')}`
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: val => `Rp ${(val/1000).toLocaleString('id-ID')}K`
+                    }
+                }
+            }
         }
     });
 }
@@ -457,23 +660,20 @@ async function handleIncomeConfirmation(userInput) {
     const txList = formatTransactionsForAI(allTransactions);
     const totalExpense = allTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
 
-    const confirmPrompt = `User sudah mengkonfirmasi pemasukan bulanan mereka.
-
-User menjawab: "${userInput}"
+    const confirmPrompt = `User menjawab: "${userInput}"
 
 Daftar transaksi:
 ${txList}
 
-INSTRUKSI WAJIB:
-- User sudah bilang "iya", "benar", "ya", "terkonfirmasi", atau sejenisnya
-- Ini berarti pemasukan SUDAH dikonfirmasi
-- Kamu HARUS langsung balas dengan format ini di baris pertama:
-  INCOME_CONFIRMED:[angka]
-  Contoh: INCOME_CONFIRMED:300000
-- Jangan tanya lagi, jangan minta konfirmasi ulang
-- Setelah INCOME_CONFIRMED, tulis 1 kalimat singkat saja
+Total pengeluaran: Rp ${totalExpense.toLocaleString('id-ID')}
 
-Total pengeluaran: Rp ${totalExpense.toLocaleString('id-ID')}`;
+Tugas:
+1. Tentukan pemasukan bulanan yang dikonfirmasi user
+2. Jika sudah terkonfirmasi, balas dengan:
+   INCOME_CONFIRMED:[angka saja]
+   Contoh: INCOME_CONFIRMED:5000000
+3. Jika belum jelas, tanya lagi dengan ramah
+4. Jangan tampilkan "INCOME_CONFIRMED" dalam teks biasa`;
 
     try {
         const reply = await callAI([...chatHistory.slice(0, 1), { role: 'user', content: confirmPrompt }]);
