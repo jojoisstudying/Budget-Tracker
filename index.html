@@ -35,13 +35,23 @@
     <main>
         <section id="form-section">
             <h2>Add Transaction</h2>
-            <input type="text" id="description" placeholder="Description (e.g. Makan siang)">
+            <input type="text" id="description" placeholder="Description (e.g. Grab, Makan siang)">
             <input type="number" id="amount" placeholder="Amount (e.g. 50000)">
+            <select id="category">
+                <option value="" disabled selected>Loading categories...</option>
+            </select>
             <select id="type">
                 <option value="income">Income</option>
                 <option value="expense">Expense</option>
             </select>
             <button id="add-btn">Add</button>
+
+            <!-- Manage Categories Link -->
+            <div style="margin-top: 10px; text-align: right;">
+                <button id="manage-cat-btn" style="background:none;border:none;color:#667eea;font-size:0.82rem;cursor:pointer;text-decoration:underline;">
+                    ⚙️ Manage Categories
+                </button>
+            </div>
         </section>
 
         <section id="list-section">
@@ -76,15 +86,40 @@
                     <h2>💡 AI Financial Health</h2>
                     <p>AI analyzes your transactions and gives financial advice</p>
                 </div>
-                <button class="ai-refresh-btn" id="ai-refresh-btn">🔄 Refresh Analysis</button>
+                <button class="ai-refresh-btn" id="ai-refresh-btn">🔄 Refresh</button>
             </div>
-
             <div id="ai-chat-area"></div>
-
             <div id="ai-input-area">
                 <input type="text" id="ai-input" placeholder="Ketik pesan kamu..." />
                 <button id="ai-send-btn">Kirim</button>
             </div>
+        </div>
+    </div>
+
+    <!-- MANAGE CATEGORIES MODAL -->
+    <div id="cat-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center; padding:20px;">
+        <div style="background:white; border-radius:16px; padding:28px; max-width:420px; width:100%; max-height:80vh; overflow-y:auto;">
+            <h3 style="margin-bottom:16px; color:#333;">⚙️ Manage Categories</h3>
+
+            <!-- Add new category -->
+            <div style="display:flex; gap:8px; margin-bottom:20px;">
+                <input type="text" id="new-cat-emoji" placeholder="😀" maxlength="2"
+                    style="width:52px; padding:10px; border:2px solid #e0e0e0; border-radius:8px; font-size:1.1rem; text-align:center;">
+                <input type="text" id="new-cat-name" placeholder="Category name"
+                    style="flex:1; padding:10px; border:2px solid #e0e0e0; border-radius:8px; font-size:0.95rem;">
+                <button id="add-cat-btn"
+                    style="padding:10px 16px; background:linear-gradient(135deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">
+                    Add
+                </button>
+            </div>
+
+            <!-- Category list -->
+            <ul id="cat-list" style="list-style:none; display:flex; flex-direction:column; gap:8px;"></ul>
+
+            <button id="close-cat-modal"
+                style="margin-top:20px; width:100%; padding:12px; background:#f0f2f5; border:none; border-radius:8px; cursor:pointer; font-size:0.95rem; font-weight:600; color:#333;">
+                Done
+            </button>
         </div>
     </div>
 
