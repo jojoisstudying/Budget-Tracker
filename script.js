@@ -457,20 +457,23 @@ async function handleIncomeConfirmation(userInput) {
     const txList = formatTransactionsForAI(allTransactions);
     const totalExpense = allTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
 
-    const confirmPrompt = `User menjawab: "${userInput}"
+    const confirmPrompt = `User sudah mengkonfirmasi pemasukan bulanan mereka.
+
+User menjawab: "${userInput}"
 
 Daftar transaksi:
 ${txList}
 
-Total pengeluaran: Rp ${totalExpense.toLocaleString('id-ID')}
+INSTRUKSI WAJIB:
+- User sudah bilang "iya", "benar", "ya", "terkonfirmasi", atau sejenisnya
+- Ini berarti pemasukan SUDAH dikonfirmasi
+- Kamu HARUS langsung balas dengan format ini di baris pertama:
+  INCOME_CONFIRMED:[angka]
+  Contoh: INCOME_CONFIRMED:300000
+- Jangan tanya lagi, jangan minta konfirmasi ulang
+- Setelah INCOME_CONFIRMED, tulis 1 kalimat singkat saja
 
-Tugas:
-1. Tentukan pemasukan bulanan yang dikonfirmasi user
-2. Jika sudah terkonfirmasi, balas dengan:
-   INCOME_CONFIRMED:[angka saja]
-   Contoh: INCOME_CONFIRMED:5000000
-3. Jika belum jelas, tanya lagi dengan ramah
-4. Jangan tampilkan "INCOME_CONFIRMED" dalam teks biasa`;
+Total pengeluaran: Rp ${totalExpense.toLocaleString('id-ID')}`;
 
     try {
         const reply = await callAI([...chatHistory.slice(0, 1), { role: 'user', content: confirmPrompt }]);
