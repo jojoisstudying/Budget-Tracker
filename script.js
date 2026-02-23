@@ -654,11 +654,27 @@ Jawab dalam 2-3 kalimat singkat, ramah, dan natural.`;
 
 // ─── STEP 2: CONFIRM INCOME ───────────────────────
 async function handleIncomeConfirmation(userInput) {
+    // Quick check — if user just says yes, extract income from transactions directly
+    const yesWords = ['iya', 'ya', 'yes', 'benar', 'betul', 'yep', 'yup', 'ok', 'oke', 'correct', 'terkonfirmasi', 'confirmed'];
+    const isJustYes = yesWords.some(w => userInput.toLowerCase().trim().includes(w));
+
+    const incomeTransactions = allTransactions.filter(t => t.type === 'income');
+    const totalExpense = allTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+
+    if (isJustYes && incomeTransactions.length > 0) {
+        // Use the largest income transaction as confirmed income
+        const largestIncome = incomeTransactions.reduce((max, t) => t.amount > max.amount ? t : max, incomeTransactions[0]);
+        confirmedIncome = largestIncome.amount;
+        addAIMessage(`Oke! Pemasukan bulanan kamu adalah Rp ${confirmedIncome.toLocaleString('id-ID')} dari "${largestIncome.description}". Sebentar, aku analisis dulu ya... 🔍`);
+        setTimeout(() => showHealthDashboard(confirmedIncome, totalExpense), 800);
+        return;
+    }
+
+    // Otherwise call AI normally
     chatHistory.push({ role: 'user', content: userInput });
     showTyping();
 
     const txList = formatTransactionsForAI(allTransactions);
-    const totalExpense = allTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
 
     const confirmPrompt = `User sudah mengkonfirmasi pemasukan bulanan mereka.
 
@@ -668,13 +684,12 @@ Daftar transaksi:
 ${txList}
 
 INSTRUKSI WAJIB:
-- User sudah bilang "iya", "benar", "ya", "terkonfirmasi", atau sejenisnya
-- Ini berarti pemasukan SUDAH dikonfirmasi
-- Kamu HARUS langsung balas dengan format ini di baris pertama:
-  INCOME_CONFIRMED:[angka]
-  Contoh: INCOME_CONFIRMED:300000
-- Jangan tanya lagi, jangan minta konfirmasi ulang
-- Setelah INCOME_CONFIRMED, tulis 1 kalimat singkat saja
+- Tentukan angka pemasukan dari jawaban user
+- Kamu HARUS balas dengan format ini di baris PERTAMA:
+  INCOME_CONFIRMED:[angka saja tanpa titik/koma]
+  Contoh: INCOME_CONFIRMED:5000000
+- Jangan tanya lagi
+- Setelah format itu, tulis 1 kalimat konfirmasi singkat
 
 Total pengeluaran: Rp ${totalExpense.toLocaleString('id-ID')}`;
 
