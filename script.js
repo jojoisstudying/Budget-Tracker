@@ -677,7 +677,7 @@ async function handleIncomeConfirmation(userInput) {
 
     const txList = formatTransactionsForAI(allTransactions);
 
-    const confirmPrompt = `User sudah mengkonfirmasi pemasukan bulanan mereka.
+    const confirmPrompt = `User menjawab pertanyaan tentang pemasukan bulanan mereka.
 
 User menjawab: "${userInput}"
 
@@ -685,12 +685,11 @@ Daftar transaksi:
 ${txList}
 
 INSTRUKSI WAJIB:
-- Tentukan angka pemasukan dari jawaban user
-- Kamu HARUS balas dengan format ini di baris PERTAMA:
-  INCOME_CONFIRMED:[angka saja tanpa titik/koma]
-  Contoh: INCOME_CONFIRMED:5000000
-- Jangan tanya lagi
-- Setelah format itu, tulis 1 kalimat konfirmasi singkat
+- Baca jawaban user dengan teliti
+- Jika user mengkonfirmasi (iya/benar/betul), balas dengan INCOME_CONFIRMED:[angka]
+- Jika user menolak atau mengoreksi (tidak/bukan/salah), tanya lagi pemasukan yang benar
+- Jangan asumsikan apapun
+- Jika INCOME_CONFIRMED, tulis di baris pertama saja
 
 Total pengeluaran: Rp ${totalExpense.toLocaleString('id-ID')}`;
 
