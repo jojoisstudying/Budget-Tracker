@@ -663,6 +663,7 @@ async function handleIncomeConfirmation(userInput) {
     const isJustYes = yesWords.some(w => lowerInput === w || lowerInput.startsWith(w + ' ') || lowerInput.endsWith(' ' + w));
     const isNo = noWords.some(w => lowerInput.includes(w));
 
+    // YES — confirm directly, no AI
     if (!isNo && isJustYes && incomeTransactions.length > 0) {
         const largestIncome = incomeTransactions.reduce((max, t) => t.amount > max.amount ? t : max, incomeTransactions[0]);
         confirmedIncome = largestIncome.amount;
@@ -671,7 +672,13 @@ async function handleIncomeConfirmation(userInput) {
         return;
     }
 
-    // Otherwise call AI normally
+    // NO — ask again directly, no AI
+    if (isNo) {
+        addAIMessage('Oke maaf! Kalau begitu berapa pemasukan bulanan kamu yang sebenarnya? Atau transaksi mana yang merupakan pemasukan bulanan kamu? 😊');
+        return;
+    }
+
+    // UNCLEAR — let AI handle it
     chatHistory.push({ role: 'user', content: userInput });
     showTyping();
 
@@ -684,12 +691,9 @@ User menjawab: "${userInput}"
 Daftar transaksi:
 ${txList}
 
-INSTRUKSI WAJIB:
-- Baca jawaban user dengan teliti
-- Jika user mengkonfirmasi (iya/benar/betul), balas dengan INCOME_CONFIRMED:[angka]
-- Jika user menolak atau mengoreksi (tidak/bukan/salah), tanya lagi pemasukan yang benar
-- Jangan asumsikan apapun
-- Jika INCOME_CONFIRMED, tulis di baris pertama saja
+Tugas: Tentukan berapa pemasukan bulanan user dari jawaban mereka.
+Jika sudah jelas, balas dengan INCOME_CONFIRMED:[angka] di baris pertama.
+Jika belum jelas, tanya sekali lagi dengan ramah.
 
 Total pengeluaran: Rp ${totalExpense.toLocaleString('id-ID')}`;
 
